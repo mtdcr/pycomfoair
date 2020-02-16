@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2019 Andreas Oberritter
+# Copyright (c) 2020 Andreas Oberritter
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,6 +20,7 @@
 # THE SOFTWARE.
 #
 
+from dataclasses import dataclass
 import logging
 import re
 
@@ -58,6 +59,21 @@ class ComfoAirBase:
         b'|' +
         b'(?P<ack>%s)' % __MSG_ACK,
         re.DOTALL)
+
+    @dataclass(frozen=True)
+    class Attribute:
+        cmd: int
+        offset: int
+        size: int
+
+    AIRFLOW_EXHAUST = Attribute(0xCE, 6 * 8, 8)
+    AIRFLOW_SUPPLY = Attribute(0xCE, 7 * 8, 8)
+    FAN_SPEED_MODE = Attribute(0xCE, 8 * 8, 8)
+    TEMP_COMFORT = Attribute(0xD2, 0 * 8, 8)
+    TEMP_OUTSIDE = Attribute(0xD2, 1 * 8, 8)
+    TEMP_SUPPLY = Attribute(0xD2, 2 * 8, 8)
+    TEMP_RETURN = Attribute(0xD2, 3 * 8, 8)
+    TEMP_EXHAUST = Attribute(0xD2, 4 * 8, 8)
 
     @staticmethod
     def _checksum(buf):

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2019 Andreas Oberritter
+# Copyright (c) 2020 Andreas Oberritter
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,7 @@
 
 import asyncio
 import logging
+from bitstring import BitArray
 from datetime import datetime
 from struct import pack
 from urllib.parse import urlparse
@@ -68,7 +69,10 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
         super().__init__(*args, **kwargs)
         self._url = urlparse(url)
         self._transport = None
-        self._listeners = set()
+        self._cooked_listeners = {}
+        self._cooked_cache = {}
+        self._raw_listeners = set()
+        self._raw_cache = {}
         self._loop = None
         self._rx_queue = None
         self._rx_task = None
@@ -209,6 +213,30 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
         for cmdpair in (switch_to_pc_mode, cmd, switch_to_cc_ease_mode):
             await self._tx_queue.put(cmdpair)
 
+    async def _cook_cmd(self, cmd, data):
+        if not self._cooked_listeners:
+            return
+
+        if self._raw_cache.get(cmd) == data:
+            return
+        self._raw_cache[cmd] = data
+
+        for attr, callbacks in self._cooked_listeners.items():
+            if attr.cmd == cmd:
+                bits = BitArray(data)
+                value = bits[attr.offset:attr.offset + attr.size].uint
+
+                # Convert temperatures to Celsius
+                if cmd == 0xd2:
+                    value = (value / 2) - 20
+
+                if self._cooked_cache.get(attr) == value:
+                    continue
+                self._cooked_cache[attr] = value
+
+                for callback in callbacks:
+                    await callback(attr, value)
+
     async def _process_data(self):
         res = self._parse_msg(self._buf)
         end = res.pop(0)
@@ -238,8 +266,9 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
                     self._cmd.rx.set()
 
         if msg_type == 'msg':
-            for listener in self._listeners:
+            for listener in self._raw_listeners:
                 await listener(res)
+            await self._cook_cmd(res[0], res[1])
 
         return True
 
@@ -343,7 +372,18 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
         await self._transaction(cmd)
 
     def add_listener(self, listener):
-        self._listeners.add(listener)
+        self._raw_listeners.add(listener)
 
     def remove_listener(self, listener):
-        self._listeners.discard(listener)
+        self._raw_listeners.discard(listener)
+
+    def add_cooked_listener(self, attribute, listener):
+        if attribute not in self._cooked_listeners:
+            self._cooked_listeners[attribute] = set()
+        self._cooked_listeners[attribute].add(listener)
+
+    def remove_cooked_listener(self, attribute, listener):
+        if attribute in self._cooked_listeners:
+            self._cooked_listeners[attribute].discard(listener)
+            if len(self._cooked_listeners[attribute]) == 0:
+                del self._cooked_listeners[attribute]
