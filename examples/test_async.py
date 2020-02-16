@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) 2019 Andreas Oberritter
+# Copyright (c) 2020 Andreas Oberritter
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -121,12 +121,18 @@ class ComfoAirHandler():
 
             logger.info('Segments: [%s]', '|'.join(segments))
 
+    async def cooked_event(self, attribute, value):
+        logger.info('Attribute %s: %s', attribute, value)
+
 def main(url):
     h = ComfoAirHandler()
 
     logger.info('Connecting...')
     ca = ComfoAir(url)
     ca.add_listener(h.event)
+    ca.add_cooked_listener(ca.AIRFLOW_EXHAUST, h.cooked_event)
+    ca.add_cooked_listener(ca.FAN_SPEED_MODE, h.cooked_event)
+    ca.add_cooked_listener(ca.TEMP_OUTSIDE, h.cooked_event)
 
     def read_from_stdin():
         c = stdin.readline().strip()
