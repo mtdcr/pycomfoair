@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='pycomfoair',
-    version='0.0.2',
+    version='0.0.3',
     author='Andreas Oberritter',
     author_email='obi@saftware.de',
     url='https://github.com/mtdcr/pycomfoair',
