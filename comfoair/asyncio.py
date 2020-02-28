@@ -88,7 +88,8 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
 
     async def _resume_reading(self, delay):
         await asyncio.sleep(delay, loop=self._loop)
-        self._transport.resume_reading()
+        if self._transport:
+            self._transport.resume_reading()
 
     def _delay_reading(self, delay):
         self._transport.pause_reading()
