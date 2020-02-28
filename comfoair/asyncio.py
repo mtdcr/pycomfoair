@@ -382,6 +382,7 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
         if attribute not in self._cooked_listeners:
             self._cooked_listeners[attribute] = set()
         self._cooked_listeners[attribute].add(listener)
+        return self._cooked_cache.get(attribute)
 
     def remove_cooked_listener(self, attribute, listener):
         if attribute in self._cooked_listeners:
