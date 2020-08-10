@@ -370,8 +370,24 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
         )
         await self._transaction(cmd_set_speed)
 
+    async def request_bootloader_version(self):
+        logger.debug('Request bootloader version')
+        cmd = CACommandPair(
+            CACommand(self._loop, 0x67, b''),
+            CACommand(self._loop, 0x68)
+        )
+        await self._transaction(cmd)
+
+    async def request_firmware_version(self):
+        logger.debug('Request firmware version')
+        cmd = CACommandPair(
+            CACommand(self._loop, 0x69, b''),
+            CACommand(self._loop, 0x6a)
+        )
+        await self._transaction(cmd)
+
     async def request_version(self):
-        logger.debug('Request version')
+        logger.debug('Request connector board version')
         cmd = CACommandPair(
             CACommand(self._loop, 0xa1, b''),
             CACommand(self._loop, 0xa2)
