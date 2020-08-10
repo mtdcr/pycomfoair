@@ -227,15 +227,21 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
         if self._raw_cache.get(cmd) == data:
             return
         self._raw_cache[cmd] = data
+        array = BitArray(data)
 
         for attr, callbacks in self._cooked_listeners.items():
             if attr.cmd == cmd:
-                bits = BitArray(data)
-                value = bits[attr.offset:attr.offset + attr.size].uint
-
-                # Convert temperatures to Celsius
-                if cmd == 0xd2:
-                    value = (value / 2) - 20
+                offset = attr.offset * 8
+                bits = array[offset:offset + (attr.size * 8)]
+                if attr.type == int:
+                    value = bits.uint
+                    # Convert temperatures to Celsius
+                    if cmd == 0xd2:
+                        value = (value / 2) - 20
+                elif attr.type == str:
+                    value = bits.bytes.decode('latin1')
+                else:
+                    continue
 
                 if self._cooked_cache.get(attr) == value:
                     continue

@@ -23,6 +23,7 @@
 from dataclasses import dataclass
 import logging
 import re
+from typing import Any
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -65,15 +66,24 @@ class ComfoAirBase:
         cmd: int
         offset: int
         size: int
+        type: Any
 
-    AIRFLOW_EXHAUST = Attribute(0xCE, 6 * 8, 8)
-    AIRFLOW_SUPPLY = Attribute(0xCE, 7 * 8, 8)
-    FAN_SPEED_MODE = Attribute(0xCE, 8 * 8, 8)
-    TEMP_COMFORT = Attribute(0xD2, 0 * 8, 8)
-    TEMP_OUTSIDE = Attribute(0xD2, 1 * 8, 8)
-    TEMP_SUPPLY = Attribute(0xD2, 2 * 8, 8)
-    TEMP_RETURN = Attribute(0xD2, 3 * 8, 8)
-    TEMP_EXHAUST = Attribute(0xD2, 4 * 8, 8)
+    BOOTLOADER_VERSION = Attribute(0x68, 0, 3, int)
+    BOOTLOADER_NAME = Attribute(0x68, 3, 10, str)
+    FIRMWARE_VERSION = Attribute(0x6A, 0, 3, int)
+    FIRMWARE_NAME = Attribute(0x6A, 3, 10, str)
+    CONNECTOR_BOARD_VERSION = Attribute(0xA2, 0, 2, int)
+    CONNECTOR_BOARD_NAME = Attribute(0xA2, 2, 10, str)
+    CC_EASE_VERSION = Attribute(0xA2, 12, 1, int)
+    CC_LUXE_VERSION = Attribute(0xA2, 13, 1, int)
+    AIRFLOW_EXHAUST = Attribute(0xCE, 6, 1, int)
+    AIRFLOW_SUPPLY = Attribute(0xCE, 7, 1, int)
+    FAN_SPEED_MODE = Attribute(0xCE, 8, 1, int)
+    TEMP_COMFORT = Attribute(0xD2, 0, 1, int)
+    TEMP_OUTSIDE = Attribute(0xD2, 1, 1, int)
+    TEMP_SUPPLY = Attribute(0xD2, 2, 1, int)
+    TEMP_RETURN = Attribute(0xD2, 3, 1, int)
+    TEMP_EXHAUST = Attribute(0xD2, 4, 1, int)
 
     @staticmethod
     def _checksum(buf):
