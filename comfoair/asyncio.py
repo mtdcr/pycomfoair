@@ -22,6 +22,7 @@
 
 import asyncio
 import logging
+import socket
 from bitstring import BitArray
 from datetime import datetime
 from struct import pack
@@ -106,6 +107,11 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
                 self._reconnect(delay=10),
                 loop=self._loop
             )
+
+    def device_id(self):
+        if self._url.scheme == 'socket':
+            return f"{self._url.hostname}:{self._url.port}"
+        return f"{socket.gethostname()}:{self._geturl().split('/')[-1]}"
 
     @staticmethod
     def _flush_queue(queue):
