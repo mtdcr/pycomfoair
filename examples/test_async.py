@@ -25,6 +25,7 @@ import asyncio
 import logging
 from datetime import datetime
 from sys import argv, exit, stdin
+
 from comfoair.asyncio import ComfoAir
 
 logging.basicConfig(level=logging.DEBUG)

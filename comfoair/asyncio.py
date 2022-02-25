@@ -24,13 +24,15 @@ import asyncio
 import logging
 import socket
 import typing as t
-from bitstring import BitArray
 from datetime import datetime
 from struct import pack
 from urllib.parse import urlparse
+
 from async_timeout import timeout
+from bitstring import BitArray
 from serial import SerialException
 from serial_asyncio import create_serial_connection
+
 from . import ComfoAirBase
 
 logger = logging.getLogger(__name__)

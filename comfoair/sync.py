@@ -22,7 +22,9 @@
 
 import logging
 from time import sleep
+
 import serial
+
 from . import ComfoAirBase
 
 logger = logging.getLogger(__name__)

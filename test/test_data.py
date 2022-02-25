@@ -24,6 +24,7 @@
 import logging
 from os.path import realpath
 from sys import argv, exit
+
 from comfoair import ComfoAirBase
 
 logging.basicConfig(level=logging.DEBUG)

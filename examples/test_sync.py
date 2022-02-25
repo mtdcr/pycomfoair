@@ -24,6 +24,7 @@
 import logging
 from struct import pack
 from sys import argv, exit
+
 from comfoair.sync import ComfoAir
 
 logging.basicConfig(level=logging.DEBUG)

@@ -20,9 +20,9 @@
 # THE SOFTWARE.
 #
 
-from dataclasses import dataclass
 import logging
 import re
+from dataclasses import dataclass
 from typing import Any
 
 logger = logging.getLogger(__name__)
