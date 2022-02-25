@@ -150,7 +150,7 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
 
             logger.info('Connecting to %s', self._geturl())
             try:
-                async with timeout(5, loop=self._loop):
+                async with timeout(5):
                     self._transport, _ = await self._create_connection()
             except (BrokenPipeError, ConnectionRefusedError,
                     SerialException, asyncio.TimeoutError) as exc:
@@ -186,7 +186,7 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
                     break
 
                 try:
-                    async with timeout(1, loop=self._loop):
+                    async with timeout(1):
                         await self._cmd.tx.wait()
                 except asyncio.TimeoutError:
                     logger.warning('TX ack timeout')
@@ -197,7 +197,7 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
                     break
 
                 try:
-                    async with timeout(1, loop=self._loop):
+                    async with timeout(1):
                         await self._cmd.rx.wait()
                 except asyncio.TimeoutError:
                     logger.warning('RX msg timeout')
