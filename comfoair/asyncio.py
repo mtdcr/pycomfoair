@@ -91,7 +91,7 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
         return self._url.geturl()
 
     async def _resume_reading(self, delay):
-        await asyncio.sleep(delay, loop=self._loop)
+        await asyncio.sleep(delay)
         if self._transport:
             self._transport.resume_reading()
 
@@ -146,7 +146,7 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
             await self._disconnect()
             self._flush_queue(self._rx_queue)
 
-            await asyncio.sleep(delay, loop=self._loop)
+            await asyncio.sleep(delay)
 
             logger.info('Connecting to %s', self._geturl())
             try:
