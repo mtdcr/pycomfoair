@@ -23,6 +23,7 @@
 import asyncio
 import logging
 import socket
+import typing as t
 from bitstring import BitArray
 from datetime import datetime
 from struct import pack
@@ -47,7 +48,7 @@ class CACommand(asyncio.Event):
         return self._cmd
 
     @property
-    def data(self) -> bytes:
+    def data(self) -> t.Optional[bytes]:
         return self._data
 
 
@@ -61,7 +62,7 @@ class CACommandPair:
         return self._tx
 
     @property
-    def rx(self) -> CACommand:
+    def rx(self) -> t.Optional[CACommand]:
         return self._rx
 
 
@@ -100,7 +101,7 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
         self._rx_queue.put_nowait(data)
         self._delay_reading(1)
 
-    def connection_lost(self, exc: Exception):
+    def connection_lost(self, exc: t.Optional[Exception]):
         logger.warning('Lost connection to %s: %s', self._geturl(), exc)
         if self._running and not self._lock.locked():
             asyncio.ensure_future(
