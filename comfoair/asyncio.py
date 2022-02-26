@@ -40,8 +40,8 @@ logger.addHandler(logging.NullHandler())
 
 
 class CACommand(asyncio.Event):
-    def __init__(self, loop, cmd: int, data: bytes = None):
-        super().__init__(loop=loop)
+    def __init__(self, cmd: int, data: bytes = None):
+        super().__init__()
         self._cmd = cmd
         self._data = data
 
@@ -77,7 +77,6 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
         self._cooked_cache = {}
         self._raw_listeners = set()
         self._raw_cache = {}
-        self._loop = None
         self._rx_queue = None
         self._rx_task = None
         self._tx_queue = None
@@ -97,7 +96,7 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
 
     def _delay_reading(self, delay):
         self._transport.pause_reading()
-        asyncio.ensure_future(self._resume_reading(delay), loop=self._loop)
+        asyncio.ensure_future(self._resume_reading(delay))
 
     def data_received(self, data: bytes):
         self._rx_queue.put_nowait(data)
@@ -108,7 +107,6 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
         if self._running and not self._lock.locked():
             asyncio.ensure_future(
                 self._reconnect(delay=10),
-                loop=self._loop
             )
 
     def device_id(self):
@@ -128,18 +126,19 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
                 break
 
     async def _create_connection(self):
+        loop = asyncio.get_running_loop()
         if self._url.scheme == 'socket':
             kwargs = {
                 'host': self._url.hostname,
                 'port': self._url.port,
             }
-            return await self._loop.create_connection(lambda: self, **kwargs)
+            return await loop.create_connection(lambda: self, **kwargs)
 
         kwargs = {
             'url': self._geturl(),
             'baudrate': self._BAUD_RATE,
         }
-        return await create_serial_connection(self._loop, lambda: self, **kwargs)
+        return await create_serial_connection(loop, lambda: self, **kwargs)
 
     async def _reconnect(self, delay: int = 0):
         async with self._lock:
@@ -157,7 +156,6 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
                 logger.warning(exc)
                 asyncio.ensure_future(
                     self._reconnect(delay=10),
-                    loop=self._loop
                 )
             else:
                 logger.info('Connected to %s', self._geturl())
@@ -212,12 +210,12 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
 
     async def _transaction(self, cmd: CACommandPair) -> None:
         switch_to_pc_mode = CACommandPair(
-            CACommand(self._loop, 0x9b, b'\x03'),
-            CACommand(self._loop, 0x9c, b'\x03')
+            CACommand(0x9b, b'\x03'),
+            CACommand(0x9c, b'\x03')
         )
         switch_to_cc_ease_mode = CACommandPair(
-            CACommand(self._loop, 0x9b, b'\x00'),
-            CACommand(self._loop, 0x9c, b'\x02')
+            CACommand(0x9b, b'\x00'),
+            CACommand(0x9c, b'\x02')
         )
 
         for cmdpair in (switch_to_pc_mode, cmd, switch_to_cc_ease_mode):
@@ -265,7 +263,6 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
                 self._buf = b''
                 asyncio.ensure_future(
                     self._reconnect(delay=3),
-                    loop=self._loop
                 )
             return False
 
@@ -299,20 +296,16 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
 
             self._rx_queue.task_done()
 
-    async def connect(self, loop=None):
+    async def connect(self):
         if self._running:
             logger.debug('Already connected!')
             return
 
-        if not loop:
-            loop = asyncio.get_event_loop()
-
-        self._loop = loop
-        self._rx_queue = asyncio.Queue(loop=loop)
-        self._rx_task = asyncio.ensure_future(self._rx_worker(), loop=loop)
-        self._tx_queue = asyncio.Queue(loop=loop)
-        self._tx_task = asyncio.ensure_future(self._tx_worker(), loop=loop)
-        self._lock = asyncio.Lock(loop=loop)
+        self._rx_queue = asyncio.Queue()
+        self._rx_task = asyncio.ensure_future(self._rx_worker())
+        self._tx_queue = asyncio.Queue()
+        self._tx_task = asyncio.ensure_future(self._tx_worker())
+        self._lock = asyncio.Lock()
         self._running = True
         await self._reconnect()
 
@@ -339,7 +332,7 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
             if self._tx_task:
                 self._tx_task.cancel()
 
-            await asyncio.gather(self._tx_task, self._rx_task, loop=self._loop,
+            await asyncio.gather(self._tx_task, self._rx_task,
                                  return_exceptions=True)
 
     async def set_rtc(self, val: datetime):
@@ -347,8 +340,8 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
 
         data = pack('BBB', (val.weekday() + 2) % 7, val.hour, val.minute)
         cmd = CACommandPair(
-            CACommand(self._loop, 0x35, data),
-            CACommand(self._loop, 0x3c)
+            CACommand(0x35, data),
+            CACommand(0x3c)
         )
 
         await self._transaction(cmd)
@@ -367,39 +360,39 @@ class ComfoAir(ComfoAirBase, asyncio.Protocol):
                 key_status[key] = duration
 
         cmd_key_status = CACommandPair(
-            CACommand(self._loop, 0x37, key_status),
-            CACommand(self._loop, 0x3c)
+            CACommand(0x37, key_status),
+            CACommand(0x3c)
         )
         await self._transaction(cmd_key_status)
 
     async def set_speed(self, speed: int):
         logger.debug('Set speed: %d', speed)
         cmd_set_speed = CACommandPair(
-            CACommand(self._loop, 0x99, pack('B', speed))
+            CACommand(0x99, pack('B', speed))
         )
         await self._transaction(cmd_set_speed)
 
     async def request_bootloader_version(self):
         logger.debug('Request bootloader version')
         cmd = CACommandPair(
-            CACommand(self._loop, 0x67, b''),
-            CACommand(self._loop, 0x68)
+            CACommand(0x67, b''),
+            CACommand(0x68)
         )
         await self._transaction(cmd)
 
     async def request_firmware_version(self):
         logger.debug('Request firmware version')
         cmd = CACommandPair(
-            CACommand(self._loop, 0x69, b''),
-            CACommand(self._loop, 0x6a)
+            CACommand(0x69, b''),
+            CACommand(0x6a)
         )
         await self._transaction(cmd)
 
     async def request_version(self):
         logger.debug('Request connector board version')
         cmd = CACommandPair(
-            CACommand(self._loop, 0xa1, b''),
-            CACommand(self._loop, 0xa2)
+            CACommand(0xa1, b''),
+            CACommand(0xa2)
         )
         await self._transaction(cmd)
 

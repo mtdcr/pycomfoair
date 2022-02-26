@@ -145,7 +145,7 @@ def main(url):
             elif c in ('a', 'add'):
                 ca.add_listener(h.event)
             elif c in ('c', 'connect'):
-                asyncio.ensure_future(ca.connect(loop))
+                asyncio.ensure_future(ca.connect())
             elif c in ('i', 'invalidate'):
                 h.invalidate_cache()
             elif c in ('k0', 'k1', 'k2', 'k3', 'k4'):
@@ -169,7 +169,7 @@ def main(url):
 
     loop = asyncio.get_event_loop()
     loop.add_reader(stdin, read_from_stdin)
-    loop.run_until_complete(ca.connect(loop))
+    loop.run_until_complete(ca.connect())
     loop.run_forever()
     loop.close()
 
