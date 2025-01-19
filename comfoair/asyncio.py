@@ -31,7 +31,7 @@ from urllib.parse import urlparse
 from async_timeout import timeout
 from bitstring import BitArray
 from serial import SerialException
-from serial_asyncio import create_serial_connection
+from serial_asyncio_fast import create_serial_connection
 
 from . import ComfoAirBase
 

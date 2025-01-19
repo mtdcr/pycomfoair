@@ -18,10 +18,10 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.7"
-async-timeout = "^4.0.2"
-bitstring = "^3.1.9"
-pyserial-asyncio = "^0.6"
+python = "^3.8"
+async-timeout = ">=4.0.3"
+bitstring = ">=3.1.9"
+pyserial-asyncio-fast = "^0.14"
 
 [tool.poetry.dev-dependencies]
 
