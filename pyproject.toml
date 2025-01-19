@@ -3,7 +3,7 @@ profile = "black"
 
 [tool.poetry]
 name = "pycomfoair"
-version = "0.1.0"
+version = "0.2.0"
 description = "Interface for Zehnder ComfoAir 350 ventilation units"
 authors = ["Andreas Oberritter <obi@saftware.de>"]
 license = "MIT"
